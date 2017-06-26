@@ -1,0 +1,43 @@
+.acf-field-social-connection .acf-input {
+    background: white;
+    border: 1px solid #dfdfdf;
+}
+.acf-social-connection__row {
+    clear: both;
+    padding: 0 15px;
+    margin: 10px 0;
+}
+.acf-social-connection__label {
+    box-sizing: border-box;
+    display: inline-block;
+    margin-top: .3em;
+    padding-right: 1em;
+    text-align: right;
+    vertical-align: top;
+    width: 160px;
+}
+input[type="text"].acf-social-connection__input,
+.acf-social-connection__input-cache {
+    box-sizing: border-box;
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - 160px);
+}
+input[type="text"].acf-social-connection__input[name$="[version]"] {
+    width: 6em;
+}
+.acf-social-connection__input-cache {
+    width: 12em;
+}
+.acf-social-connection__input-cache .acf-input-wrap {
+    /*width: 6em;*/
+}
+.acf-social-connection__status {
+    border-top: 1px solid #dfdfdf;
+    padding: 10px 15px 10px 175px;
+}
+.acf-social-connection__status .notice {
+    display: inline-block;
+    font-size: 11px;
+    margin: 0;
+}

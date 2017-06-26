@@ -1,0 +1,23 @@
+{
+    "name": "wp-social-network",
+    "description": "Social network api connections.",
+    "homepage": "https://rue-de-la-vieille.fr/",
+    "type": "wordpress-muplugin",
+    "license": "private",
+	"authors": [
+		{
+			"name"    : "Jérôme Mulsant",
+			"homepage": "https://rue-de-la-vieille.fr/"
+		}
+	],
+    "require": {
+        "php": ">=5.4",
+        "facebook/graph-sdk": "^5.0",
+        "php-instagram-api/php-instagram-api": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rdlv\\WordPress\\Networks\\": "classes/"
+        }
+    }
+}
