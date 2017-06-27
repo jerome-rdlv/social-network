@@ -18,8 +18,6 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 if( ! defined( 'ABSPATH' ) ) exit;
 
-require __DIR__ .'/vendor/autoload.php';
-
 // check if class already exists
 if( !class_exists('Rdlv\WordPress\Networks\Networks') ) :
 
