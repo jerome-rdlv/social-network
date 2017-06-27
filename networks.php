@@ -60,10 +60,7 @@ class Networks {
 		add_action('acf/include_field_types', 	array($this, 'include_field_types')); // v5
 		add_action('acf/register_fields', 		array($this, 'include_field_types')); // v4
 
-
-        // initialize network classes
-        new Facebook();
-        new Instagram();
+        NetworkApi::init();
     }
 	
 	

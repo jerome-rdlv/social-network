@@ -10,57 +10,24 @@ use WP_Error;
 
 class Facebook extends NetworkApi
 {
-    const CODE_RETURN_ACTION = 'facebook_code_return';
-
-    private $facebook = null;
-
-    function __construct()
+    private function getFacebook($field)
     {
-        parent::__construct();
-        add_action('rdlv_network_status_facebook', array($this, 'renderConnexionLink'), 10, 1);
-        add_action('admin_action_'. self::CODE_RETURN_ACTION, array($this, 'codeReturn'));
-        add_action('init', array($this, 'init'));
-
-        add_filter('rdlv_network_last_facebook_posts', array($this, 'getLastPosts'), 10, 2);
+        return new \Facebook\Facebook(array(
+            'app_id' => $field['value']['id'],
+            'app_secret' => $field['value']['secret'],
+            'default_graph_version' => $field['value']['version']
+        ));
     }
 
-    public function init()
+    private function getData($field)
     {
-        if (is_user_logged_in() && session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-        add_action('wp_logout', array($this, 'endSession'));
-        add_action('wp_login', array($this, 'endSession'));
-    }
-
-    public function endSession()
-    {
-        session_destroy();
-    }
-
-    private function getFacebook($field_name)
-    {
-        if ($this->facebook === null) {
-            $params = $this->getParams($field_name);
-            return new \Facebook\Facebook(array(
-                'app_id' => $params['id'],
-                'app_secret' => $params['secret'],
-                'default_graph_version' => $params['version']
-            ));
-        }
-        return $this->facebook;
-    }
-
-    private function getRaw($field_name, $limit = 8)
-    {
-        $token = get_option(self::PREFIX . $field_name .'_token');
+        $token = $this->getOption($field, 'token');
         if (!$token) {
             return array();
         }
 
         try {
-            $params = get_field($field_name, 'option');
-            $fb = $this->getFacebook($field_name);
+            $fb = $this->getFacebook($field);
             if (!$fb) {
                 return array();
             }
@@ -70,12 +37,12 @@ class Facebook extends NetworkApi
             /** @see https://developers.facebook.com/docs/graph-api/reference/v2.8/page/feed */
             $response = $fb->get(sprintf(
                 '%s/posts?fields=%s&limit=%s',
-                $params['target'],
+                $field['value']['target'],
                 implode(',', array(
                     'id', 'message', 'picture', 'full_picture', 'name',
                     'created_time', 'from', 'description', 'link'
                 )),
-                $limit
+                $field['value']['limit']
             ));
         }
         catch (Exception $e) {
@@ -91,7 +58,7 @@ class Facebook extends NetworkApi
         return $response;
     }
 
-    public function renderConnexionLink($field)
+    public function renderStatus($field)
     {
         if (empty($field['value']['id']) || empty($field['value']['secret']) || empty($field['value']['version'])) {
             echo $this->getLabel('Configuration incomplète', 'warning');
@@ -99,45 +66,28 @@ class Facebook extends NetworkApi
         }
 
         try {
-            $fb = $this->getFacebook($field['_name']);
+            $fb = $this->getFacebook($field);
 
-            $redirectUrl = add_query_arg(array(
-                'field' => $field['_name'],
-                'nonce' => wp_create_nonce($field['_name'] .'_code_return'),
-                'action' => self::CODE_RETURN_ACTION
-            ), get_admin_url());
+            $callbackUrl = $this->getCallbackUrl($field);
 
-            set_transient(self::PREFIX . $field['_name'] .'_back_url', get_home_url() . $_SERVER['REQUEST_URI']);
+            $url = $fb->getRedirectLoginHelper()->getLoginUrl($callbackUrl);
 
-//                $url = $fb->getRedirectLoginHelper()->getLoginUrl($redirectUrl, array(
-//                    'email',
-//                    'user_posts',
-//                    // 'manage_pages'?
-//                ));
-            $url = $fb->getRedirectLoginHelper()->getLoginUrl($redirectUrl);
-
-            $response = $this->getRaw($field['_name']);
+            $response = $this->getData($field);
 
             echo $this->getLabel(
                 $response ? 'Connecté' : 'Déconnecté',
                 $response ? 'success' : 'error'
             );
-            echo $this->getConnectionLink($url);
+            echo $this->getLinkButton($url);
         }
         catch (Exception $e) {
             return;
         }
     }
 
-    public function getLastPosts($posts, $field_name)
+    public function formatValue($field)
     {
-        $expiration = $this->getExpiration($field_name);
-        $cached = get_transient(self::PREFIX . $field_name . '_data');
-        if ($expiration && $cached) {
-            return $cached;
-        }
-
-        $response = $this->getRaw($field_name);
+        $response = $this->getData($field);
 
         if (!$response) {
             return array();
@@ -149,81 +99,79 @@ class Facebook extends NetworkApi
             return array();
         }
 
-        $posts = array_filter(array_map(function ($item) {
-            if (isset($item['full_picture']) && isset($item['message']) && isset($item['link'])) {
-                return array(
-                    'thumb' => $item['full_picture'],
-                    'caption' => $item['message'],
-                    'network' => 'facebook',
-                    'url' => $item['link'],
-                    'date' => (int)DateTime::createFromFormat(DateTime::ISO8601, $item['created_time'])->format('U')
-                );
-            }
-            return false;
+        $posts = array_filter(array_map(function ($item) use ($field) {
+            return $this->getPostData($item);
         }, $payload['data']));
 
         usort($posts, function ($a, $b) {
             return $b['date'] - $a['date'];
         });
 
-        set_transient(
-            self::PREFIX . $field_name .'_data',
-            $posts,
-            $expiration
-        );
-
         return $posts;
     }
 
-    public function codeReturn()
+    private function getPostData($item)
     {
-        if (empty($_REQUEST['field'])) {
-            exit;
+        if (empty($item['link']) || empty($item['created_time'])) {
+            return false;
         }
 
-        $field_name = $_REQUEST['field'];
+        $data = array(
+            'network' => 'facebook',
+            'url' => $item['link'],
+            'date' => (int)DateTime::createFromFormat(DateTime::ISO8601, $item['created_time'])->format('U')
+        );
 
-        if (wp_verify_nonce($_REQUEST['nonce'], $field_name .'_code_return') === false) {
-            exit;
+        // thumb
+        if (!empty($item['full_picture'])) {
+            $data['thumb'] = $item['full_picture'];
+        }
+//        elseif (!empty($item['picture'])) {
+//            $data['thumb'] = $item['picture'];
+//        }
+//        else {
+//            return false;
+//        }
+
+        // caption
+        if (!empty($item['message'])) {
+            $data['caption'] = $item['message'];
+        }
+        elseif (!empty($item['description'])) {
+            $data['caption'] = $item['description'];
+        }
+        else {
+            return false;
         }
 
-        $location = 'Location: '. get_transient(self::PREFIX . $field_name .'_back_url');
+        return $data;
+    }
 
-        $fb = $this->getFacebook($field_name);
+    public function callback($field)
+    {
+        $fb = $this->getFacebook($field);
 
         try {
             $accessToken = $fb->getRedirectLoginHelper()->getAccessToken();
+            $this->saveOption($field, 'token', $accessToken->getValue());
+            $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
+            $this->redirectBack($field);
         }
         catch (FacebookResponseException $e) {
             error_log('Facebook fetch error on token request (Graph error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
-            header($location);
-            exit;
+            $this->redirectBack($field);
         }
         catch (FacebookSDKException $e) {
             error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
-            header($location);
-            exit;
+            $this->redirectBack($field);
         }
 
         if (!isset($accessToken)) {
             error_log('Facebook fetch error on token request (no token found is response)');
             $this->addNotice('La connection a Facebook a échoué');
-            header($location);
-            exit;
+            $this->redirectBack($field);
         }
-
-        update_option(
-            self::PREFIX . $field_name .'_token',
-            $accessToken->getValue(),
-            false
-        );
-
-        $field = get_field_object($field_name, 'option');
-        $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
-
-        header($location);
-        exit;
     }
 }

@@ -12,6 +12,10 @@ class acf_field_social_connection extends acf_field {
 
     const NETWORK_FACEBOOK = 'facebook';
     const NETWORK_INSTAGRAM = 'instagram';
+    const NETWORK_LINKEDIN = 'linkedin';
+    const NETWORK_TWITTER = 'twitter';
+
+    const TYPE = 'social_connection';
 
 	/*
 	*  __construct
@@ -31,13 +35,29 @@ class acf_field_social_connection extends acf_field {
             'version' => 'Version de l’API',
             'id' => 'ID de l’app',
             'secret' => 'Clé secrète',
-            'target' => 'Cible'
+            'target' => 'Cible',
+            'limit' => 'Nombre de posts'
         ),
 	    self::NETWORK_INSTAGRAM => array(
+//            'id' => 'Client ID',
+//            'secret' => 'Client Secret',
+            'target' => 'Cible',
+            'limit' => 'Nombre de posts'
+        ),
+	    self::NETWORK_LINKEDIN => array(
             'id' => 'Client ID',
             'secret' => 'Client Secret',
-            'target' => 'Cible'
-        )
+            'target' => 'Cible',
+            'limit' => 'Nombre de posts'
+        ),
+	    self::NETWORK_TWITTER => array(
+            'id' => 'API Key',
+            'secret' => 'API Secret',
+            'access_token' => 'Access Token',
+            'access_token_secret' => 'Access Token Secret',
+            'target' => 'Cible',
+            'limit' => 'Nombre de posts'
+        ),
     );
 
 	private $settings;
@@ -48,7 +68,7 @@ class acf_field_social_connection extends acf_field {
 		*  name (string) Single word, no spaces. Underscores allowed
 		*/
 		
-		$this->name = 'social_connection';
+		$this->name = self::TYPE;
 		
 		
 		/*
@@ -123,12 +143,14 @@ class acf_field_social_connection extends acf_field {
 		*/
 		
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Network','acf-facebook_connection'),
+			'label'			=> __('Network','acf-social_connection'),
 			'type'			=> 'select',
 			'name'			=> 'network',
             'choices' => array(
                 self::NETWORK_FACEBOOK => 'Facebook',
                 self::NETWORK_INSTAGRAM => 'Instagram',
+                self::NETWORK_TWITTER => 'Twitter',
+                self::NETWORK_LINKEDIN => 'LinkedIn',
             )
 		));
 
@@ -181,7 +203,7 @@ class acf_field_social_connection extends acf_field {
                 </div>
             </div>
             <div class="acf-social-connection__status">
-                <?php do_action('rdlv_network_status_'. $field['network'], $field) ?>
+                <?php do_action('rdlv_network_status', $field) ?>
             </div>
         </div>
 		<?php
@@ -208,16 +230,13 @@ class acf_field_social_connection extends acf_field {
 		$url = $this->settings['url'];
 		$version = $this->settings['version'];
 
-		// register & include JS
-//		wp_register_script( 'acf-input-facebook_connection', "{$url}assets/js/input.js", array('acf-input'), $version );
-//		wp_enqueue_script('acf-input-facebook_connection');
-		
-		
 		// register & include CSS
-        wp_register_style('acf-input-facebook_connection', "{$url}assets/css/input.css", array('acf-input'), $version);
-        wp_enqueue_style('acf-input-facebook_connection');
-		
-	}
+        wp_register_style('acf-input-social_connection', "{$url}assets/css/input.css", array('acf-input'), $version);
+        wp_enqueue_style('acf-input-social_connection');
+
+        wp_register_script('acf-input-social_connection', "{$url}assets/js/input.js", array('acf-input'), $version);
+        wp_enqueue_script('acf-input-social_connection');
+    }
 
 	
 	/*

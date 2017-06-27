@@ -13,7 +13,8 @@
     "require": {
         "php": ">=5.4",
         "facebook/graph-sdk": "^5.0",
-        "php-instagram-api/php-instagram-api": "dev-master"
+        "php-instagram-api/php-instagram-api": "dev-master",
+        "j7mbo/twitter-api-php": "^1.0"
     },
     "autoload": {
         "psr-4": {

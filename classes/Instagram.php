@@ -9,187 +9,78 @@ use WP_Error;
 
 class Instagram extends NetworkApi
 {
-    const CODE_RETURN_ACTION = 'instagram_code_return';
-
     const AUTH_URL = 'https://api.instagram.com/oauth/authorize/?client_id=%s&redirect_uri=%s&response_type=code&scope=%s';
 
-    function __construct()
+    public function renderStatus($field)
     {
-        parent::__construct();
-        add_action('rdlv_network_status_instagram', array($this, 'renderConnexionLink'), 10, 1);
-        add_action('admin_action_'. self::CODE_RETURN_ACTION, array($this, 'codeReturn'));
-
-        add_filter('rdlv_network_last_instagram_posts', array($this, 'getLastPosts'), 10, 2);
-    }
-
-    public function renderConnexionLink($field)
-    {
-        if (empty($field['value']['id']) || empty($field['value']['secret'])) {
+        if (empty($field['value']['target'])) {
             echo $this->getLabel('Configuration incomplète', 'warning');
             return;
         }
 
         try {
-            $redirectUrl = add_query_arg(array(
-                'field' => $field['_name'],
-                'nonce' => wp_create_nonce($field['_name'] .'_code_return'),
-                'action' => self::CODE_RETURN_ACTION
-            ), get_admin_url());
+//            $callbackUrl = $this->getCallbackUrl($field);
 
-            set_transient(self::PREFIX . $field['_name'] . '_redirect_url', $redirectUrl);
-            set_transient(self::PREFIX . $field['_name'] . '_back_url', get_home_url() . $_SERVER['REQUEST_URI']);
+//            $this->saveTransient($field, 'redirect_url', $callbackUrl);
+//            $this->saveTransient($field, 'back_url', get_home_url() . $_SERVER['REQUEST_URI']);
 
-            $params = $this->getParams($field['_name']);
+//            $params = $this->getParams($field['key']);
 
-            $url = sprintf(
-                self::AUTH_URL,
-                $params['id'],
-                urlencode($redirectUrl),
-                implode('+', array('public_content'))
-            );
+//            $url = sprintf(
+//                self::AUTH_URL,
+//                $params['id'],
+//                urlencode($callbackUrl),
+//                implode('+', array('public_content'))
+//            );
 
-            $response = $this->getRaw($field['_name']);
+            $response = $this->getData($field);
 
             echo $this->getLabel(
                 $response ? 'Connecté' : 'Déconnecté',
-                $response ? 'success' : 'error'
+                $response ? self::NOTIF_STATUS_SUCCESS : 'error'
             );
-            echo $this->getConnectionLink($url);
+//            echo $this->getConnectionLink($url);
         }
         catch (Exception $e) {
             return;
         }
     }
 
-//    function getRaw($field_name)
-//    {
-//        $token = get_option(self::PREFIX . $field_name .'_token');
-//        if (!$token) {
-//            return false;
-//        }
-//
-//        try {
-//            $params = $this->getParams($field_name);
-//            $instagram = new \Instagram\Instagram($token);
-//            $user = $instagram->getUserByUsername($params['target']);
-//            $response = $user->getMedia();
-//        }
-//        catch (Exception $e) {
-//            error_log('Instagram fetch error ('. $e->getMessage() .')');
-//            return false;
-//        }
-//        if ($response instanceof WP_Error) {
-//            error_log('Instagram fetch error ('. $response->get_error_message() .')');
-//            return false;
-//        }
-//        return $response;
-//    }
-
-//    function getLastPosts($posts, $field_name)
-//    {
-//        $expiration = $this->getExpiration($field_name);
-//        $cached = get_transient(self::PREFIX . $field_name . '_data');
-//        if ($expiration && $cached) {
-//            return $cached;
-//        }
-//
-//        $response = $this->getRaw($field_name);
-//
-//        if (!$response) {
-//            return array();
-//        }
-//
-//        $payload = $response->getData();
-//        if (!is_array($payload) || count($payload) < 1) {
-//            return array();
-//        }
-//
-//        $posts = array_filter(array_map(function ($item) {
-//            /** @var Media $item */
-//            $content = $item->getData();
-//            return array(
-//                'thumb' => $content->images->standard_resolution->url,
-//                'caption' => $content->caption->text,
-//                'network' => 'instagram',
-//                'url' => $content->link,
-//                'date' => (int)$content->created_time
-//            );
-//        }, $payload));
-//
-//
-//        usort($posts, function ($a, $b) {
-//            return $b['date'] - $a['date'];
-//        });
-//
-//        set_transient(
-//            self::PREFIX . $field_name .'_data',
-//            $posts,
-//            $expiration
-//        );
-//
-//        return $posts;
-//    }
-
-    public function codeReturn()
+    public function callback($field)
     {
-        if (empty($_REQUEST['field'])) {
-            exit;
-        }
-
-        $field_name = $_REQUEST['field'];
-
-        if (wp_verify_nonce($_REQUEST['nonce'], $field_name .'_code_return') === false) {
-            exit;
-        }
-
-        $location = 'Location: '. get_transient(self::PREFIX . $field_name .'_back_url');
-
-        $params = $this->getParams($field_name);
         $auth = new Auth(array(
-            'client_id' => $params['id'],
-            'client_secret' => $params['secret'],
-            'redirect_uri' => get_transient(self::PREFIX . $field_name . '_redirect_url'),
+            'client_id' => $field['value']['id'],
+            'client_secret' => $field['value']['secret'],
+            'redirect_uri' => $this->getTransient($field, 'redirect_url'),
             'scope' => 'public_content'
         ));
 
         try {
             $accessToken = $auth->getAccessToken($_GET['code']);
+            $this->saveOption($field, 'token', $accessToken);
+            $this->addNotice('La connection '. $field['label'] .' est correctement établie', self::NOTIF_STATUS_SUCCESS);
+            $this->redirectBack($field);
         }
         catch (Exception $e) {
             error_log('Instagram fetch error on token request ('. $e->getMessage() .')');
             $this->addNotice('La connection a Instagram a échoué');
-            header($location);
-            exit;
+            $this->redirectBack($field);
         }
 
         if (!isset($accessToken)) {
             error_log('Instagram fetch error on token request (no token found is response)');
             $this->addNotice('La connection a Instagram a échouée');
-            header($location);
-            exit;
+            $this->redirectBack($field);
         }
-
-        update_option(
-            self::PREFIX . $field_name .'_token',
-            $accessToken,
-            false
-        );
-
-        $field = get_field_object($field_name, 'option');
-        $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
-
-        header($location);
-        exit;
     }
 
-    function getRaw($field_name)
+    function getData($field)
     {
-        $params = $this->getParams($field_name);
-        if (!$params['target']) {
+        if (empty($field['value']['target'])) {
             return array();
         }
 
-        $remote = wp_remote_get('https://www.instagram.com/'. $params['target'] .'/');
+        $remote = wp_remote_get('https://www.instagram.com/'. $field['value']['target'] .'/');
         if (is_wp_error($remote)) {
             error_log('Instagram fetch error ('. $remote->get_error_message() .')');
             return array();
@@ -211,18 +102,17 @@ class Instagram extends NetworkApi
             return array();
         }
 
-        return $payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'];
+        return array_slice(
+            $payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'],
+            0,
+            $field['value']['limit']
+        );
     }
 
-    public function getLastPosts($posts, $field_name)
-    {
-        $expiration = $this->getExpiration($field_name);
-        $cached = get_transient(self::PREFIX . $field_name . '_data');
-        if ($expiration && $cached) {
-            return $cached;
-        }
 
-        $nodes = $this->getRaw($field_name);
+    public function formatValue($field)
+    {
+        $nodes = $this->getData($field);
 
         $posts = array_map(function ($item) {
             return array(
@@ -237,12 +127,6 @@ class Instagram extends NetworkApi
         usort($posts, function ($a, $b) {
             return $b['date'] - $a['date'];
         });
-
-        set_transient(
-            self::PREFIX . $field_name . '_data',
-            $posts,
-            $this->getExpiration($field_name)
-        );
 
         return $posts;
     }
