@@ -152,7 +152,7 @@ class Facebook extends NetworkApi
         $fb = $this->getFacebook($field);
 
         try {
-            $accessToken = $fb->getRedirectLoginHelper()->getAccessToken();
+            $accessToken = $fb->getRedirectLoginHelper()->getAccessToken($this->getCallbackUrl($field));
             $this->saveOption($field, 'token', $accessToken->getValue());
             $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
             $this->redirectBack($field);

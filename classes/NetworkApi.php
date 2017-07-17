@@ -114,7 +114,9 @@ abstract class NetworkApi
 
     public static function cbEndSession()
     {
-        session_destroy();
+        if (session_id()) {
+            session_destroy();
+        }
     }
 
     public static function cbAdminNotice()
