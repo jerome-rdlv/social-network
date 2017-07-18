@@ -88,7 +88,7 @@ class Twitter extends NetworkApi
             if (isset($item['id'])) {
                 return array(
                     'thumb' => !empty($item['entities']['media'][0]) ? $item['entities']['media'][0]['media_url_https'] : null,
-                    'caption' => !empty($item['text']) ? $item['text'] : '',
+                    'caption' => !empty($item['full_text']) ? $item['full_text'] : '',
                     'network' => 'twitter',
                     'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id']),
                     'date' => (int)(new DateTime($item['created_at']))->format('U')
