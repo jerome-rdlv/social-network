@@ -31,8 +31,9 @@ class Twitter extends NetworkApi
                 return array();
             }
 
+            /* tweet_mode=extended needed to get media on some tweets */
             $response = $twitter
-                ->setGetfield(sprintf('?count=%s&screen_name=%s', $field['value']['limit'], $field['value']['target']))
+                ->setGetfield(sprintf('?count=%s&screen_name=%s&tweet_mode=extended', $field['value']['limit'], $field['value']['target']))
                 ->buildOauth(self::API_URL, 'GET')
                 ->performRequest();
         }
@@ -86,7 +87,7 @@ class Twitter extends NetworkApi
         $posts = array_filter(array_map(function ($item) use ($field) {
             if (isset($item['id'])) {
                 return array(
-                    'thumb' => !empty($item['extended_entities']['media'][0]) ? $item['extended_entities']['media'][0]['media_url_https'] : null,
+                    'thumb' => !empty($item['entities']['media'][0]) ? $item['entities']['media'][0]['media_url_https'] : null,
                     'caption' => !empty($item['text']) ? $item['text'] : '',
                     'network' => 'twitter',
                     'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id']),
