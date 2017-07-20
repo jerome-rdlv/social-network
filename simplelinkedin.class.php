@@ -257,10 +257,10 @@ class SimpleLinkedIn {
     /**
      * Use this function to make calls to the LinkedIn OAuth2 API.
      * See https://developer.linkedin.com/apis for availible calls.
-     * @param type $method POST|GET|PUT|DELETE
-     * @param type $resource Resource to make a call to. (eg. v1/people/~/connections)
-     * @param type $body POST body data (Will be send as is if string is supplied, json_encoded if object or assoc array.)
-     * @return type response object. Throws Exception on error.
+     * @param string $method POST|GET|PUT|DELETE
+     * @param string $resource Resource to make a call to. (eg. v1/people/~/connections)
+     * @param string $body POST body data (Will be send as is if string is supplied, json_encoded if object or assoc array.)
+     * @return string response object. Throws Exception on error.
      */
     public function fetch($method, $resource, $body = '',$format='json') {
         //Query parameters needed to make a basic OAuth transaction
