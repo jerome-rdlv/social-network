@@ -85,7 +85,7 @@ class Twitter extends NetworkApi
         }
 
         $posts = array_filter(array_map(function ($item) use ($field) {
-            if (isset($item['id'])) {
+            if (isset($item['id']) && !empty($item['entities']['media'][0])) {
                 return array(
                     'thumb' => !empty($item['entities']['media'][0]) ? $item['entities']['media'][0]['media_url_https'] : null,
                     'caption' => !empty($item['full_text']) ? $item['full_text'] : '',
