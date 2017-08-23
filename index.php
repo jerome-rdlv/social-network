@@ -2,8 +2,6 @@
 
 namespace Rdlv\WordPress\Networks;
 
-require __DIR__ .'/../../../vendor/autoload.php';
-
 /*
 Plugin Name: Advanced Custom Fields: Facebook Connection
 Plugin URI: PLUGIN_URL
