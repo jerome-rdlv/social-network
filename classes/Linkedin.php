@@ -110,8 +110,9 @@ class Linkedin extends NetworkApi
         $posts = array_filter(array_map(function (StdClass $item) use ($field) {
             if (!empty($item->updateContent->companyStatusUpdate->share)) {
                 $share = $item->updateContent->companyStatusUpdate->share;
+                $thumb = empty($share->content->submittedImageUrl) ? '' : $share->content->submittedImageUrl;
                 return array(
-                    'thumb' => empty($share->content->submittedImageUrl) ? '' : $share->content->submittedImageUrl,
+                    'thumb' => preg_replace('/^https?:\/\//', '//', $thumb),
                     'caption' => empty($share->comment) ? '' : $share->comment,
                     'network' => 'linkedin',
                     'url' => empty($share->content) ? '' : $share->content->shortenedUrl,
