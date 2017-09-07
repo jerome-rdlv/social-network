@@ -90,7 +90,7 @@ class Twitter extends NetworkApi
                     'thumb' => !empty($item['entities']['media'][0]) ? $item['entities']['media'][0]['media_url_https'] : null,
                     'caption' => !empty($item['full_text']) ? $item['full_text'] : '',
                     'network' => 'twitter',
-                    'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id']),
+                    'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id_str']),
                     'date' => (int)(new DateTime($item['created_at']))->format('U')
                 );
             }
