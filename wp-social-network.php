@@ -1,5 +1,7 @@
 <?php
 
+use Rdlv\WordPress\Networks\NetworkApi;
+
 /*
 Plugin Name: Advanced Custom Fields: Facebook Connection
 Plugin URI: PLUGIN_URL
@@ -12,7 +14,6 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 // exit if accessed directly
-use Rdlv\WordPress\Networks\NetworkApi;
 
 if (!defined('ABSPATH')) exit;
 
