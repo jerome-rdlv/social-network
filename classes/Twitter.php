@@ -91,7 +91,7 @@ class Twitter extends NetworkApi
                     'caption' => !empty($item['full_text']) ? $item['full_text'] : '',
                     'network' => 'twitter',
                     'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id_str']),
-                    'date' => (int)(new DateTime($item['created_at']))->format('U')
+                    'date' => new DateTime($item['created_at'])
                 );
             }
             return false;

@@ -116,7 +116,7 @@ class Linkedin extends NetworkApi
                     'caption' => empty($share->comment) ? '' : $share->comment,
                     'network' => 'linkedin',
                     'url' => empty($share->content) ? '' : $share->content->shortenedUrl,
-                    'date' => (int)($share->timestamp / 1000)
+                    'date' => DateTime::createFromFormat('U', (int)($share->timestamp / 1000))
                 );
             }
             return false;

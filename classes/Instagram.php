@@ -2,6 +2,7 @@
 
 namespace Rdlv\WordPress\Networks;
 
+use DateTime;
 use Exception;
 use Instagram\Auth;
 use Instagram\Media;
@@ -120,7 +121,7 @@ class Instagram extends NetworkApi
                 'caption' => $item['caption'],
                 'network' => 'instagram',
                 'url' => 'https://instagram.com/p/'. $item['code'],
-                'date' => (int)$item['date']
+                'date' => DateTime::createFromFormat('U', (int)$item['date'])
             );
         }, $nodes);
 

@@ -2,6 +2,7 @@
 
 namespace Rdlv\WordPress\Networks;
 
+use DateInterval;
 use DateTime;
 use Exception;
 use Facebook\Exceptions\FacebookResponseException;
@@ -104,7 +105,9 @@ class Facebook extends NetworkApi
         }, $payload['data']));
 
         usort($posts, function ($a, $b) {
-            return $b['date'] - $a['date'];
+            /** @var DateInterval $diff */
+            $diff = $a['date']->diff($b['date']);
+            return $diff->days * ($diff->invert ? -1 : 1);
         });
 
         return $posts;
@@ -119,7 +122,7 @@ class Facebook extends NetworkApi
         $data = array(
             'network' => 'facebook',
             'url' => $item['link'],
-            'date' => (int)DateTime::createFromFormat(DateTime::ISO8601, $item['created_time'])->format('U')
+            'date' => DateTime::createFromFormat(DateTime::ISO8601, $item['created_time'])
         );
 
         // thumb

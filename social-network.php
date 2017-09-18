@@ -17,9 +17,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 if (!defined('ABSPATH')) exit;
 
 // check if class already exists
-if (!class_exists('WpSocialNetwork')) :
+if (!class_exists('SocialNetwork')) :
 
-    class WpSocialNetwork
+    class SocialNetwork
     {
 
         /*
@@ -85,7 +85,7 @@ if (!class_exists('WpSocialNetwork')) :
     }
 
     // initialize
-    (new WpSocialNetwork())->init();
+    (new SocialNetwork())->init();
 
 // class_exists check
 endif;
