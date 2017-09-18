@@ -2,6 +2,7 @@
 
 namespace Rdlv\WordPress\Networks;
 
+use DateInterval;
 use Exception;
 
 abstract class NetworkApi
@@ -251,6 +252,15 @@ abstract class NetworkApi
             $class,
             $label
         );
+    }
+    
+    protected function sort(&$posts)
+    {
+        usort($posts, function ($a, $b) {
+            /** @var DateInterval $diff */
+            $diff = $a['date']->diff($b['date']);
+            return $diff->days * ($diff->invert ? -1 : 1);
+        });
     }
 
     private function getOptKey($field, $key)

@@ -97,9 +97,7 @@ class Twitter extends NetworkApi
             return false;
         }, $data));
 
-        usort($posts, function ($a, $b) {
-            return $b['date'] - $a['date'];
-        });
+        $this->sort($posts);
 
         return $posts;
     }

@@ -125,9 +125,7 @@ class Instagram extends NetworkApi
             );
         }, $nodes);
 
-        usort($posts, function ($a, $b) {
-            return $b['date'] - $a['date'];
-        });
+        $this->sort($posts);
 
         return $posts;
     }

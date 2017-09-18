@@ -104,11 +104,7 @@ class Facebook extends NetworkApi
             return $this->getPostData($item);
         }, $payload['data']));
 
-        usort($posts, function ($a, $b) {
-            /** @var DateInterval $diff */
-            $diff = $a['date']->diff($b['date']);
-            return $diff->days * ($diff->invert ? -1 : 1);
-        });
+        $this->sort($posts);
 
         return $posts;
     }

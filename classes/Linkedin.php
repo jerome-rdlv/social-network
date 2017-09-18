@@ -122,9 +122,7 @@ class Linkedin extends NetworkApi
             return false;
         }, $response->values));
 
-        usort($posts, function ($a, $b) {
-            return $b['date'] - $a['date'];
-        });
+        $this->sort($posts);
 
         return $posts;
     }
