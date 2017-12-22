@@ -152,6 +152,13 @@ class Facebook extends NetworkApi
 
         try {
             $accessToken = $fb->getRedirectLoginHelper()->getAccessToken($this->getCallbackUrl($field));
+            
+            if (!isset($accessToken)) {
+                error_log('Facebook fetch error on token request (no token found is response)');
+                $this->addNotice('La connection a Facebook a échoué');
+                $this->redirectBack($field);
+            }
+            
             $this->saveOption($field, 'token', $accessToken->getValue());
             $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
             $this->redirectBack($field);
@@ -166,9 +173,8 @@ class Facebook extends NetworkApi
             $this->addNotice('La connection a Facebook a échoué');
             $this->redirectBack($field);
         }
-
-        if (!isset($accessToken)) {
-            error_log('Facebook fetch error on token request (no token found is response)');
+        catch (Exception $e) {
+            error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
             $this->redirectBack($field);
         }
