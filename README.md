@@ -6,7 +6,9 @@ I’m publishing this here because it might be useful to others,
 but USE OF THIS SCRIPT IS ENTIRELY AT YOUR OWN RISK. I accept no liability from its use.
 
 This WordPress *mu-plugin* adds an ACF field type for connecting social networks
-and retrieving last posts from social networks. **It is aimed at website developers.**
+and retrieving last posts from social networks.
+
+**This plugin is aimed at website developers and doesn’t provide any front-end rendering.**
 
 As I’m using this on lots of my clients websites, I’m really willing to improve its security,
 reliability and its features. Contact me if you need support using it, I’d be pleased
@@ -27,12 +29,10 @@ for example the Facebook field asks for :
 * App Secret
 * Target
 
-This plugin does not provide any front-end rendering.
-
 A call to `get_field` returns an associative array of the retrieved last posts,
 with each item containing following keys :
 
-* network: Network name, `facebook`, `twitter`, etc.
+* network: Network name, *facebook*, *twitter*, etc.
 * url: URL of the post on the social network
 * date: Publication date of the post (`DateTime` object)
 * thumb: URL of the post picture
