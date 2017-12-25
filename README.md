@@ -32,11 +32,11 @@ for example the Facebook field asks for :
 A call to `get_field` returns an associative array of the retrieved last posts,
 with each item containing following keys :
 
-* network: Network name, *facebook*, *twitter*, etc.
-* url: URL of the post on the social network
-* date: Publication date of the post (`DateTime` object)
-* thumb: URL of the post picture
-* caption: Associated text of the post
+* `network`: Network name, *facebook*, *twitter*, etc.
+* `url`: URL of the post on the social network
+* `date`: Publication date of the post (`DateTime` object)
+* `thumb`: URL of the post picture
+* `caption`: Associated text of the post
 
 ## Installation
 
