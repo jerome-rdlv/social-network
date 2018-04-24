@@ -11,13 +11,24 @@ use WP_Error;
 
 class Facebook extends NetworkApi
 {
+    const DEFAULT_API_VERSION = 'v2.11';
+    
+    /**
+     * @param $field
+     * @return \Facebook\Facebook
+     */
     private function getFacebook($field)
     {
-        return new \Facebook\Facebook(array(
-            'app_id' => $field['value']['id'],
-            'app_secret' => $field['value']['secret'],
-            'default_graph_version' => $field['value']['version']
-        ));
+        try {
+            return new \Facebook\Facebook(array(
+                'app_id'                => $field['value']['id'],
+                'app_secret'            => $field['value']['secret'],
+                'default_graph_version' => $field['value']['version'],
+            ));
+        } catch (FacebookSDKException $e) {
+            error_log('Facebook SDK Exception: '. $e->getMessage());
+            return null;
+        }
     }
 
     private function getData($field)

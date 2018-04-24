@@ -4,12 +4,14 @@ namespace Rdlv\WordPress\Networks;
 
 use DateInterval;
 use Exception;
+use ReflectionClass;
 
 abstract class NetworkApi
 {
     // static
 
-    const TRANSIENT_KEY = 'rdlv_network_connection_notice';
+    const TRANSIENT_NOTICE_KEY = 'rdlv_network_connection_notice';
+    const TRANSIENT_ERROR_KEY = 'rdlv_network_connection_error';
     const PREFIX = 'rdlv_network_';
     const OPT_FORMAT = self::PREFIX .'%s_%s';
 
@@ -47,7 +49,8 @@ abstract class NetworkApi
         'facebook' => 'Facebook',
         'instagram' => 'Instagram',
         'twitter' => 'Twitter',
-        'linkedin' => 'Linkedin',
+        'linkedin' => 'LinkedIn',
+        'youtube' => 'Youtube',
     );
 
     /** @var array NetworkApi[] */
@@ -104,6 +107,7 @@ abstract class NetworkApi
         $network = self::getNetwork($field['network']);
         $network->populate($field);
         $network->renderStatus($field);
+        $network->printErrors();
 
         // add clear cache button
         $network->saveTransient($field, self::KEY_BACK_URL, get_home_url() . $_SERVER['REQUEST_URI']);
@@ -122,14 +126,14 @@ abstract class NetworkApi
 
     public static function cbAdminNotice()
     {
-        $notices = get_transient(self::TRANSIENT_KEY);
+        $notices = get_transient(self::TRANSIENT_NOTICE_KEY);
         if ($notices) {
             foreach ($notices as $key => $notice) {
                 echo '<div class="notice notice-' . $notice['status'] . ' is-dismissible" >';
                 echo '<p>' . $notice['message'] . '</p>';
                 echo '</div>';
             }
-            set_transient(self::TRANSIENT_KEY, array());
+            set_transient(self::TRANSIENT_NOTICE_KEY, array());
         }
     }
 
@@ -168,7 +172,7 @@ abstract class NetworkApi
     public function callback($field) {}
     abstract public function renderStatus($field);
     abstract public function formatValue($field);
-
+    
     private function populate(&$field, $ctx = null, $value = null)
     {
         if ($ctx === null) {
@@ -224,7 +228,7 @@ abstract class NetworkApi
 
     protected function addNotice($message, $status = 'error')
     {
-        $notices = get_transient(self::TRANSIENT_KEY);
+        $notices = get_transient(self::TRANSIENT_NOTICE_KEY);
         if (!$notices) {
             $notices = array();
         }
@@ -232,7 +236,35 @@ abstract class NetworkApi
             'status' => $status,
             'message' => $message
         );
-        set_transient(self::TRANSIENT_KEY, $notices);
+        set_transient(self::TRANSIENT_NOTICE_KEY, $notices);
+    }
+
+    protected function addError($error)
+    {
+        $class = get_class($this);
+        error_log($class . ' error: ' . $error);
+        
+        $key = self::TRANSIENT_ERROR_KEY .'_'. md5($class);
+        $errors = get_transient($key);
+        if (!$errors) {
+            $errors = array();
+        }
+        $errors[] = $error;
+        set_transient($key, $errors);
+    }
+
+    protected function printErrors()
+    {
+        $class = get_class($this);
+        $key = self::TRANSIENT_ERROR_KEY .'_'. md5($class);
+        $errors = get_transient($key);
+        if ($errors) {
+            echo '<ul class="errors">';
+            foreach ($errors as $error) {
+                echo '<li class="notice notice-error">'. $error .'</li>';
+            }
+            echo '</ul>';
+        }
     }
 
     protected function getLabel($text, $status = self::NOTIF_STATUS_ERROR)
@@ -257,6 +289,9 @@ abstract class NetworkApi
     protected function sort(&$posts)
     {
         usort($posts, function ($a, $b) {
+            if (!$a instanceof \DateTime || !$b instanceof \DateTime) {
+                return 0;
+            }
             /** @var DateInterval $diff */
             $diff = $a['date']->diff($b['date']);
             return $diff->days * ($diff->invert ? -1 : 1);

@@ -46,8 +46,21 @@ class Twitter extends NetworkApi
             error_log('Twitter fetch error ('. $response->get_error_message() .')');
             return array();
         }
-
-        return $response;
+        
+        $data = json_decode($response, true);
+        if ($data === null) {
+            error_log('Twitter fetch error (can not JSON decode API response)');
+            return array();
+        }
+        
+        if (isset($data['errors']) && $data['errors']) {
+            error_log('Twitter fetch error ('. implode(' / ', array_map(function ($item) {
+                return $item['message'];
+            }, $data['errors'])) .')');
+            return array();
+        }
+        
+        return $data;
     }
 
     public function renderStatus($field)
@@ -72,13 +85,7 @@ class Twitter extends NetworkApi
 
     public function formatValue($field)
     {
-        $response = $this->getData($field);
-
-        if (!$response) {
-            return array();
-        }
-
-        $data = json_decode($response, true);
+        $data = $this->getData($field);
 
         if (!$data) {
             return array();
@@ -86,8 +93,13 @@ class Twitter extends NetworkApi
 
         $posts = array_filter(array_map(function ($item) use ($field) {
             if (isset($item['id']) && !empty($item['entities']['media'][0])) {
+                $thumb = $item['entities']['media'][0];
                 return array(
-                    'thumb' => !empty($item['entities']['media'][0]) ? $item['entities']['media'][0]['media_url_https'] : null,
+                    'thumb' => $thumb ? array(
+                        'src' => $thumb['media_url_https'],
+                        'width' => $thumb['indices'][0],
+                        'height' => $thumb['indices'][1],
+                    ) : null,
                     'caption' => !empty($item['full_text']) ? $item['full_text'] : '',
                     'network' => 'twitter',
                     'url' => sprintf(self::TWEET_URL, $field['value']['target'], $item['id_str']),

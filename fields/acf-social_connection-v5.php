@@ -14,6 +14,7 @@ class acf_field_social_connection extends acf_field {
     const NETWORK_INSTAGRAM = 'instagram';
     const NETWORK_LINKEDIN = 'linkedin';
     const NETWORK_TWITTER = 'twitter';
+    const NETWORK_YOUTUBE = 'youtube';
 
     const TYPE = 'social_connection';
 
@@ -36,19 +37,19 @@ class acf_field_social_connection extends acf_field {
             'id' => 'ID de l’app',
             'secret' => 'Clé secrète',
             'target' => 'Cible',
-            'limit' => 'Nombre de posts'
+            'limit' => 'Nombre de posts',
         ),
 	    self::NETWORK_INSTAGRAM => array(
 //            'id' => 'Client ID',
 //            'secret' => 'Client Secret',
             'target' => 'Cible',
-            'limit' => 'Nombre de posts'
+            'limit' => 'Nombre de posts',
         ),
 	    self::NETWORK_LINKEDIN => array(
             'id' => 'Client ID',
             'secret' => 'Client Secret',
             'target' => 'Cible',
-            'limit' => 'Nombre de posts'
+            'limit' => 'Nombre de posts',
         ),
 	    self::NETWORK_TWITTER => array(
             'id' => 'API Key',
@@ -56,10 +57,15 @@ class acf_field_social_connection extends acf_field {
             'access_token' => 'Access Token',
             'access_token_secret' => 'Access Token Secret',
             'target' => 'Cible',
-            'limit' => 'Nombre de posts'
+            'limit' => 'Nombre de posts',
+        ),
+        self::NETWORK_YOUTUBE => array(
+            'key' => 'API Key',
+            'target' => 'Playlist ID',
+            'limit' => 'Nombre de vidéo',
         ),
     );
-
+	
 	private $settings;
 
 	function __construct( $settings ) {
@@ -151,6 +157,7 @@ class acf_field_social_connection extends acf_field {
                 self::NETWORK_INSTAGRAM => 'Instagram',
                 self::NETWORK_TWITTER => 'Twitter',
                 self::NETWORK_LINKEDIN => 'LinkedIn',
+                self::NETWORK_YOUTUBE => 'YouTube',
             )
 		));
 

@@ -38,7 +38,7 @@ class Instagram extends NetworkApi
 
             echo $this->getLabel(
                 $response ? 'Connecté' : 'Déconnecté',
-                $response ? self::NOTIF_STATUS_SUCCESS : 'error'
+                $response ? self::NOTIF_STATUS_SUCCESS : self::NOTIF_STATUS_ERROR
             );
 //            echo $this->getConnectionLink($url);
         }
@@ -63,7 +63,8 @@ class Instagram extends NetworkApi
             $this->redirectBack($field);
         }
         catch (Exception $e) {
-            error_log('Instagram fetch error on token request ('. $e->getMessage() .')');
+            $this->addError('fetch error on token request ('. $e->getMessage() .')');
+//            error_log('Instagram fetch error on token request ('. $e->getMessage() .')');
             $this->addNotice('La connection a Instagram a échoué');
             $this->redirectBack($field);
         }
@@ -83,31 +84,46 @@ class Instagram extends NetworkApi
 
         $remote = wp_remote_get('https://www.instagram.com/'. $field['value']['target'] .'/');
         if (is_wp_error($remote)) {
-            error_log('Instagram fetch error ('. $remote->get_error_message() .')');
+            $this->addError($remote->get_error_message());
+//            error_log('Instagram fetch error ('. $remote->get_error_message() .')');
             return array();
         }
 
         if (wp_remote_retrieve_response_code($remote) !== 200) {
-            error_log('Instagram fetch error (bad response code '. wp_remote_retrieve_response_code($remote) .')');
+            $this->addError(wp_remote_retrieve_response_code($remote));
+//            error_log('Instagram fetch error (bad response code '. wp_remote_retrieve_response_code($remote) .')');
             return array();
         }
 
         if (!preg_match('/window._sharedData *= *(.*) *; *<\/script>/i', $remote['body'], $matches)) {
-            error_log('Instagram fetch error (payload not found in response)');
+            $this->addError('payload not found in response)');
+//            error_log('Instagram fetch error (payload not found in response)');
             return array();
         }
 
         $payload = json_decode($matches[1], true);
-        if (!isset($payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'])) {
-            error_log('Instagram fetch error (medias not found in payload)');
+//        if (!isset($payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'])) {
+        if (!isset($payload['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges'])) {
+            $this->addError('medias not found in payload)');
+//            error_log('Instagram fetch error (medias not found in payload)');
             return array();
         }
+        
+        $nodes = $payload['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges'];
+        
+        if (!$nodes) {
+            return [];
+        }
 
-        return array_slice(
-            $payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'],
+        $nodes = array_slice(
+            $nodes,
             0,
             $field['value']['limit']
         );
+        
+        return array_map(function ($node) {
+            return $node['node'];
+        }, $nodes);
     }
 
 
@@ -116,12 +132,20 @@ class Instagram extends NetworkApi
         $nodes = $this->getData($field);
 
         $posts = array_map(function ($item) {
+            $caption = isset($item['edge_media_to_caption']['edges'][0]['node']['text']) ? $item['edge_media_to_caption']['edges'][0]['node']['text'] : '';
             return array(
-                'thumb' => $item['thumbnail_src'],
-                'caption' => $item['caption'],
+                'thumb' => array(
+                    'src' => $item['thumbnail_src'],
+                    'width' => $item['dimensions']['width'],
+                    'height' => $item['dimensions']['height'],
+                    'srcset' => implode(', ', array_map(function ($thumb) {
+                        return $thumb['src'] .' '. $thumb['config_width'] .'w';
+                    }, $item['thumbnail_resources']))
+                ),
+                'caption' => $caption,
                 'network' => 'instagram',
-                'url' => 'https://instagram.com/p/'. $item['code'],
-                'date' => DateTime::createFromFormat('U', (int)$item['date'])
+                'url' => sprintf('https://instagram.com/p/%s', $item['shortcode']),
+                'date' => DateTime::createFromFormat('U', (int)$item['taken_at_timestamp'])
             );
         }, $nodes);
 
