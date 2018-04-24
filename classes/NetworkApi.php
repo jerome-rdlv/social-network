@@ -264,6 +264,8 @@ abstract class NetworkApi
                 echo '<li class="notice notice-error">'. $error .'</li>';
             }
             echo '</ul>';
+            
+            set_transient($key, array());
         }
     }
 

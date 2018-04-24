@@ -4,7 +4,9 @@
 namespace Rdlv\WordPress\Networks;
 
 use DateTime;
+use Exception;
 use Google_Client;
+use Google_Service_Exception;
 use Google_Service_YouTube;
 use Google_Service_YouTube_PlaylistItem;
 use Google_Service_YouTube_Thumbnail;
@@ -16,13 +18,24 @@ class Youtube extends NetworkApi
     
     private function getData($field)
     {
-        $client = new Google_Client();
-        $client->setDeveloperKey($field['value']['key']);
-        $youtube = new Google_Service_YouTube($client);
-        $response = $youtube->playlistItems->listPlaylistItems('snippet', array(
-            'playlistId' => $field['value']['target'],
-            'maxResults' => $field['value']['limit'],
-        ));
+        try {
+            $client = new Google_Client();
+            $client->setDeveloperKey($field['value']['key']);
+            $youtube = new Google_Service_YouTube($client);
+            $response = $youtube->playlistItems->listPlaylistItems('snippet', array(
+                'playlistId' => $field['value']['target'],
+                'maxResults' => $field['value']['limit'],
+            ));
+        }
+        /** @noinspection PhpRedundantCatchClauseInspection */
+        catch (Google_Service_Exception $e) {
+            $this->addError($e->getMessage());
+            return null;
+        }
+        catch (Exception $e) {
+            $this->addError($e->getMessage());
+            return null;
+        }
         
         return $response;
     }
