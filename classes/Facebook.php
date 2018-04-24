@@ -140,7 +140,7 @@ class Facebook extends NetworkApi
             $data['caption'] = $item['description'];
         }
         else {
-            return false;
+            $data['caption'] = '';
         }
 
         return $data;
