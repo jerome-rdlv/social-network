@@ -38,23 +38,23 @@ class Twitter extends NetworkApi
                 ->performRequest();
         }
         catch (Exception $e) {
-            error_log('Twitter fetch error ('. $e->getMessage() .')');
+            $this->addError('fetch error ('. $e->getMessage() .')');
             return array();
         }
 
         if ($response instanceof WP_Error) {
-            error_log('Twitter fetch error ('. $response->get_error_message() .')');
+            $this->addError('fetch error ('. $response->get_error_message() .')');
             return array();
         }
         
         $data = json_decode($response, true);
         if ($data === null) {
-            error_log('Twitter fetch error (can not JSON decode API response)');
+            $this->addError('fetch error (can not JSON decode API response)');
             return array();
         }
         
         if (isset($data['errors']) && $data['errors']) {
-            error_log('Twitter fetch error ('. implode(' / ', array_map(function ($item) {
+            $this->addError('fetch error ('. implode(' / ', array_map(function ($item) {
                 return $item['message'];
             }, $data['errors'])) .')');
             return array();

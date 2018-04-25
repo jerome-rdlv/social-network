@@ -58,12 +58,14 @@ class Linkedin extends NetworkApi
             }
         }
         catch (Exception $e) {
-            error_log('Linkedin fetch error ('. $e->getMessage() .')');
+            $this->addError('fetch error ('. $e->getMessage() .')');
+//            error_log('Linkedin fetch error ('. $e->getMessage() .')');
             return array();
         }
 
         if ($response instanceof WP_Error) {
-            error_log('Linkedin fetch error ('. $response->get_error_message() .')');
+            $this->addError('fetch error ('. $response->get_error_message() .')');
+//            error_log('Linkedin fetch error ('. $response->get_error_message() .')');
             return array();
         }
 
@@ -152,7 +154,7 @@ class Linkedin extends NetworkApi
             $this->redirectBack($field);
         }
         catch (Exception $e) {
-            error_log('LinkedIn error on retreiveTokenAccess (Graph error: '. $e->getMessage() .')');
+            $this->addError('error on retreiveTokenAccess (Graph error: '. $e->getMessage() .')');
             $this->addNotice('La connection a LinkedIn a échoué');
             $this->redirectBack($field);
         }

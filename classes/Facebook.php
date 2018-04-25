@@ -26,7 +26,7 @@ class Facebook extends NetworkApi
                 'default_graph_version' => $field['value']['version'],
             ));
         } catch (FacebookSDKException $e) {
-            error_log('Facebook SDK Exception: '. $e->getMessage());
+            $this->addError('SDK Exception: '. $e->getMessage());
             return null;
         }
     }
@@ -58,12 +58,12 @@ class Facebook extends NetworkApi
             ));
         }
         catch (Exception $e) {
-            error_log('Facebook fetch error ('. $e->getMessage() .')');
+            $this->addError('fetch error ('. $e->getMessage() .')');
             return array();
         }
 
         if ($response instanceof WP_Error) {
-            error_log('Facebook fetch error ('. $response->get_error_message() .')');
+            $this->addError('fetch error ('. $response->get_error_message() .')');
             return array();
         }
 
@@ -167,7 +167,7 @@ class Facebook extends NetworkApi
             $accessToken = $fb->getRedirectLoginHelper()->getAccessToken($this->getCallbackUrl($field));
             
             if (!isset($accessToken)) {
-                error_log('Facebook fetch error on token request (no token found is response)');
+                $this->addError('fetch error on token request (no token found in response)');
                 $this->addNotice('La connection a Facebook a échoué');
                 $this->redirectBack($field);
             }
@@ -177,17 +177,17 @@ class Facebook extends NetworkApi
             $this->redirectBack($field);
         }
         catch (FacebookResponseException $e) {
-            error_log('Facebook fetch error on token request (Graph error: '. $e->getMessage() .')');
+            $this->addError('fetch error on token request (Graph error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
             $this->redirectBack($field);
         }
         catch (FacebookSDKException $e) {
-            error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
+            $this->addError('fetch error on token request (SDK error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
             $this->redirectBack($field);
         }
         catch (Exception $e) {
-            error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
+            $this->addError('fetch error on token request (SDK error: '. $e->getMessage() .')');
             $this->addNotice('La connection a Facebook a échoué');
             $this->redirectBack($field);
         }

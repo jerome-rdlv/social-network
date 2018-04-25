@@ -85,19 +85,16 @@ class Instagram extends NetworkApi
         $remote = wp_remote_get('https://www.instagram.com/'. $field['value']['target'] .'/');
         if (is_wp_error($remote)) {
             $this->addError($remote->get_error_message());
-//            error_log('Instagram fetch error ('. $remote->get_error_message() .')');
             return array();
         }
 
         if (wp_remote_retrieve_response_code($remote) !== 200) {
             $this->addError(wp_remote_retrieve_response_code($remote));
-//            error_log('Instagram fetch error (bad response code '. wp_remote_retrieve_response_code($remote) .')');
             return array();
         }
 
         if (!preg_match('/window._sharedData *= *(.*) *; *<\/script>/i', $remote['body'], $matches)) {
             $this->addError('payload not found in response)');
-//            error_log('Instagram fetch error (payload not found in response)');
             return array();
         }
 
@@ -105,7 +102,6 @@ class Instagram extends NetworkApi
 //        if (!isset($payload['entry_data']['ProfilePage'][0]['user']['media']['nodes'])) {
         if (!isset($payload['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges'])) {
             $this->addError('medias not found in payload)');
-//            error_log('Instagram fetch error (medias not found in payload)');
             return array();
         }
         
