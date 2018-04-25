@@ -94,7 +94,9 @@ class Pinterest extends NetworkApi
         try {
             $pinterest = $this->getPinterest($field);
 
-            $callbackUrl = $this->getCallbackUrl($field);
+            $callbackUrl = $this->getCallbackUrl($field, array(
+//                '_nonce' => '',
+            ));
             
             $url = $pinterest->auth->getLoginUrl($callbackUrl, array('read_public'));
 
@@ -105,6 +107,8 @@ class Pinterest extends NetworkApi
                 $response ? 'success' : 'error'
             );
             echo $this->getLinkButton($url);
+            
+            $this->addNotice('Pinterest callback URL: <code>'. $callbackUrl .'</code>', self::NOTIF_STATUS_INFO);
         }
         catch (Exception $e) {
             return;

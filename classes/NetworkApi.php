@@ -18,6 +18,7 @@ abstract class NetworkApi
     const ACTION_CLEAR_CACHE = 'clear-cache';
 
     const NOTIF_STATUS_SUCCESS = 'success';
+    const NOTIF_STATUS_INFO = 'info';
     const NOTIF_STATUS_ERROR = 'error';
 
     const CALLBACK_ACTION = self::PREFIX .'callback';
@@ -148,9 +149,9 @@ abstract class NetworkApi
         $network = self::getNetwork($field['network']);
         $network->populate($field, $_REQUEST[self::CALLBACK_CTX_FIELD]);
 
-        if (wp_verify_nonce($_REQUEST[self::CALLBACK_KEY_NONCE], $network->getNonceAction($field)) === false) {
-            exit;
-        }
+//        if (wp_verify_nonce($_REQUEST[self::CALLBACK_KEY_NONCE], $network->getNonceAction($field)) === false) {
+//            exit;
+//        }
 
         if (!empty($_REQUEST['apiaction'])) {
             switch ($_REQUEST['apiaction']) {
@@ -217,12 +218,12 @@ abstract class NetworkApi
 
     protected function getCallbackUrl($field, $params = array())
     {
-        $params = array_merge($params, array(
-            self::CALLBACK_KEY_NONCE => wp_create_nonce($this->getNonceAction($field)),
+        $params = array_merge(array(
+//            self::CALLBACK_KEY_NONCE => wp_create_nonce($this->getNonceAction($field)),
             self::CALLBACK_KEY_FIELD => $field['key'],
             self::CALLBACK_CTX_FIELD => $field['ctx'],
             self::CALLBACK_KEY_ACTION => self::CALLBACK_ACTION
-        ));
+        ), $params);
 
         return add_query_arg($params, get_admin_url());
     }
