@@ -70,6 +70,7 @@ class Pinterest extends NetworkApi
                 'fields' => implode(',', array(
                     'id', 'image', 'link', 'media', 'metadata', 'note', 'url', 'created_at'
                 )),
+                'limit' => $field['value']['limit'],
             ));
             
             if ($expiration) {
