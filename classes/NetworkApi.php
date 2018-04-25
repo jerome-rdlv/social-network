@@ -51,6 +51,7 @@ abstract class NetworkApi
         'twitter' => 'Twitter',
         'linkedin' => 'LinkedIn',
         'youtube' => 'Youtube',
+        'pinterest' => 'Pinterest',
     );
 
     /** @var array NetworkApi[] */

@@ -15,6 +15,7 @@ class acf_field_social_connection extends acf_field {
     const NETWORK_LINKEDIN = 'linkedin';
     const NETWORK_TWITTER = 'twitter';
     const NETWORK_YOUTUBE = 'youtube';
+    const NETWORK_PINTEREST = 'pinterest';
 
     const TYPE = 'social_connection';
 
@@ -63,6 +64,12 @@ class acf_field_social_connection extends acf_field {
             'key' => 'API Key',
             'target' => 'Playlist ID',
             'limit' => 'Nombre de vidéo',
+        ),
+        self::NETWORK_PINTEREST => array(
+            'id' => 'App ID',
+            'secret' => 'App Secret',
+            'target' => 'Cible',
+            'limit' => 'Nombre de posts',
         ),
     );
 	
@@ -158,6 +165,7 @@ class acf_field_social_connection extends acf_field {
                 self::NETWORK_TWITTER => 'Twitter',
                 self::NETWORK_LINKEDIN => 'LinkedIn',
                 self::NETWORK_YOUTUBE => 'YouTube',
+                self::NETWORK_PINTEREST => 'Pinterest',
             )
 		));
 
