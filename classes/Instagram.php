@@ -4,9 +4,9 @@ namespace Rdlv\WordPress\Networks;
 
 use DateTime;
 use Exception;
-use Instagram\Auth;
-use Instagram\Media;
-use WP_Error;
+//use Instagram\Auth;
+//use Instagram\Media;
+//use WP_Error;
 
 class Instagram extends NetworkApi
 {
@@ -49,31 +49,31 @@ class Instagram extends NetworkApi
 
     public function callback($field)
     {
-        $auth = new Auth(array(
-            'client_id' => $field['value']['id'],
-            'client_secret' => $field['value']['secret'],
-            'redirect_uri' => $this->getTransient($field, 'redirect_url'),
-            'scope' => 'public_content'
-        ));
-
-        try {
-            $accessToken = $auth->getAccessToken($_GET['code']);
-            $this->saveOption($field, 'token', $accessToken);
-            $this->addNotice('La connection '. $field['label'] .' est correctement établie', self::NOTIF_STATUS_SUCCESS);
-            $this->redirectBack($field);
-        }
-        catch (Exception $e) {
-            $this->addError('fetch error on token request ('. $e->getMessage() .')');
-//            error_log('Instagram fetch error on token request ('. $e->getMessage() .')');
-            $this->addNotice('La connection a Instagram a échoué');
-            $this->redirectBack($field);
-        }
-
-        if (!isset($accessToken)) {
-            error_log('Instagram fetch error on token request (no token found is response)');
-            $this->addNotice('La connection a Instagram a échouée');
-            $this->redirectBack($field);
-        }
+//        $auth = new Auth(array(
+//            'client_id' => $field['value']['id'],
+//            'client_secret' => $field['value']['secret'],
+//            'redirect_uri' => $this->getTransient($field, 'redirect_url'),
+//            'scope' => 'public_content'
+//        ));
+//
+//        try {
+//            $accessToken = $auth->getAccessToken($_GET['code']);
+//            $this->saveOption($field, 'token', $accessToken);
+//            $this->addNotice('La connection '. $field['label'] .' est correctement établie', self::NOTIF_STATUS_SUCCESS);
+//            $this->redirectBack($field);
+//        }
+//        catch (Exception $e) {
+//            $this->addError('fetch error on token request ('. $e->getMessage() .')');
+////            error_log('Instagram fetch error on token request ('. $e->getMessage() .')');
+//            $this->addNotice('La connection a Instagram a échoué');
+//            $this->redirectBack($field);
+//        }
+//
+//        if (!isset($accessToken)) {
+//            error_log('Instagram fetch error on token request (no token found is response)');
+//            $this->addNotice('La connection a Instagram a échouée');
+//            $this->redirectBack($field);
+//        }
     }
 
     function getData($field)

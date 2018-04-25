@@ -279,7 +279,7 @@ abstract class NetworkApi
         );
     }
 
-    protected function getLinkButton($url, $label = 'Reconnecter', $class = 'button-primary')
+    protected function getLinkButton($url, $label = 'Reconnecter', $class = 'button')
     {
         return sprintf(
             ' <a href="%s" class="button button-small %s" style="margin-left:.5em;">%s</a>',

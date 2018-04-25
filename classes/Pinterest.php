@@ -3,6 +3,7 @@
 namespace Rdlv\WordPress\Networks;
 
 use DateTime;
+use DirkGroenen\Pinterest\Models\Pin;
 use Exception;
 use Facebook\Exceptions\FacebookResponseException;
 use Facebook\Exceptions\FacebookSDKException;
@@ -12,74 +13,90 @@ class Pinterest extends NetworkApi
 {
     /**
      * @param $field
-     * @return \Facebook\Facebook
+     * @return \DirkGroenen\Pinterest\Pinterest
      */
     private function getPinterest($field)
     {
-        try {
-            return new \Facebook\Facebook(array(
-                'app_id'                => $field['value']['id'],
-                'app_secret'            => $field['value']['secret'],
-                'default_graph_version' => $field['value']['version'],
-            ));
-        } catch (FacebookSDKException $e) {
-            error_log('Facebook SDK Exception: '. $e->getMessage());
-            return null;
-        }
+        return new \DirkGroenen\Pinterest\Pinterest(
+            $field['value']['id'],
+            $field['value']['secret']
+        );
     }
 
+    /**
+     * @param $field
+     * @return array|\DirkGroenen\Pinterest\Models\Collection|mixed
+     */
     private function getData($field)
     {
+        $expiration = $this->getExpiration($field);
+        $cached = $this->getTransient($field, 'pdata');
+        if ($expiration && $cached) {
+            return $cached;
+        }
+        
         $token = $this->getOption($field, 'token');
         if (!$token) {
             return array();
         }
 
         try {
-            $fb = $this->getPinterest($field);
-            if (!$fb) {
+            $pinterest = $this->getPinterest($field);
+            if (!$pinterest) {
                 return array();
             }
-
-            $fb->setDefaultAccessToken($token);
-
-            /** @see https://developers.facebook.com/docs/graph-api/reference/v2.8/page/feed */
-            $response = $fb->get(sprintf(
-                '%s/posts?fields=%s&limit=%s',
-                $field['value']['target'],
-                implode(',', array(
-                    'id', 'message', 'picture', 'full_picture', 'name',
-                    'created_time', 'from', 'description', 'link'
+            
+            $pinterest->auth->setOAuthToken($token);
+            
+            // get board id
+            $remote = wp_remote_get($field['value']['target']);
+            if (is_wp_error($remote)) {
+                $this->addError($remote->get_error_message());
+                return array();
+            }
+            
+            if (wp_remote_retrieve_response_code($remote) !== 200) {
+                $this->addError('error getting Pinterest board page ('. wp_remote_retrieve_response_code($remote) .')');
+                return array();
+            }
+            
+            if (!preg_match('/"options": *{"board_id": *"([0-9]+)"/', $remote['body'], $matches)) {
+                $this->addError('board id not found in response');
+                return array();
+            }
+            
+            $boardId = $matches[1];
+            $pins = $pinterest->pins->fromBoard($boardId, array(
+                'fields' => implode(',', array(
+                    'id', 'image', 'link', 'media', 'metadata', 'note', 'url', 'created_at'
                 )),
-                $field['value']['limit']
             ));
+            
+            if ($expiration) {
+                $this->saveTransient($field, 'pdata', $pins, $expiration);
+            }
+            
+            return $pins;
         }
         catch (Exception $e) {
-            error_log('Facebook fetch error ('. $e->getMessage() .')');
+            $this->addError($e->getMessage());
             return array();
         }
-
-        if ($response instanceof WP_Error) {
-            error_log('Facebook fetch error ('. $response->get_error_message() .')');
-            return array();
-        }
-
-        return $response;
     }
 
     public function renderStatus($field)
     {
-        if (empty($field['value']['id']) || empty($field['value']['secret']) || empty($field['value']['version'])) {
+        if (empty($field['value']['id']) || empty($field['value']['secret']) || empty($field['value']['target'])) {
             echo $this->getLabel('Configuration incomplète', 'warning');
             return;
         }
 
         try {
-            $fb = $this->getPinterest($field);
+            $pinterest = $this->getPinterest($field);
 
             $callbackUrl = $this->getCallbackUrl($field);
-
-            $url = $fb->getRedirectLoginHelper()->getLoginUrl($callbackUrl);
+            
+            $url = $pinterest->auth->getLoginUrl($callbackUrl, array('read_public'));
 
             $response = $this->getData($field);
 
@@ -96,94 +113,74 @@ class Pinterest extends NetworkApi
 
     public function formatValue($field)
     {
-        $response = $this->getData($field);
+        $pins = $this->getData($field);
 
-        if (!$response) {
-            return array();
-        }
-
-        $payload = $response->getDecodedBody();
-
-        if (!isset($payload['data']) || count($payload['data']) < 1) {
+        if (!$pins) {
             return array();
         }
 
         $posts = array_filter(array_map(function ($item) use ($field) {
+            /** @var Pin $item */
             return $this->getPostData($item);
-        }, $payload['data']));
+        }, $pins->all()));
 
         $this->sort($posts);
 
         return $posts;
     }
 
-    private function getPostData($item)
+    /**
+     * @param Pin $pin
+     * @return array|bool
+     */
+    private function getPostData($pin)
     {
-        if (empty($item['link']) || empty($item['created_time'])) {
+        $pin = $pin->toArray();
+        
+        if (empty($pin['url']) || empty($pin['created_at'])) {
             return false;
         }
 
         $data = array(
-            'network' => 'facebook',
-            'url' => $item['link'],
-            'date' => DateTime::createFromFormat(DateTime::ISO8601, $item['created_time'])
+            'network' => 'pinterest',
+            'thumb' => isset($pin['image']['original']) ? array(
+                'src' => $pin['image']['original']['url'],
+                'width' => $pin['image']['original']['width'],
+                'height' => $pin['image']['original']['height'],
+            ) : null,
+            'url' => $pin['url'],
+            'caption' => '',
+            'date' => DateTime::createFromFormat('Y-m-d\TH:i:s', $pin['created_at']),
         );
-
-        // thumb
-        if (!empty($item['full_picture'])) {
-            $data['thumb'] = $item['full_picture'];
-        }
-//        elseif (!empty($item['picture'])) {
-//            $data['thumb'] = $item['picture'];
-//        }
-//        else {
-//            return false;
-//        }
-
-        // caption
-        if (!empty($item['message'])) {
-            $data['caption'] = $item['message'];
-        }
-        elseif (!empty($item['description'])) {
-            $data['caption'] = $item['description'];
-        }
-        else {
-            $data['caption'] = '';
-        }
 
         return $data;
     }
 
     public function callback($field)
     {
-        $fb = $this->getPinterest($field);
+        $pinterest = $this->getPinterest($field);
 
         try {
-            $accessToken = $fb->getRedirectLoginHelper()->getAccessToken($this->getCallbackUrl($field));
+            if (!isset($_GET['code'])) {
+                $this->addError('Error getting code from Pinterest');
+                $this->addNotice('La connection a Pinterest a échoué');
+                $this->redirectBack($field);
+            }
+            $token = $pinterest->auth->getOAuthToken($_GET['code']);
             
-            if (!isset($accessToken)) {
-                error_log('Facebook fetch error on token request (no token found is response)');
-                $this->addNotice('La connection a Facebook a échoué');
+            if (!isset($token)) {
+                $this->addError('Error getting accessToken from Pinterest response');
+                $this->addNotice('La connection a Pinterest a échoué');
                 $this->redirectBack($field);
             }
             
-            $this->saveOption($field, 'token', $accessToken->getValue());
+            $this->saveOption($field, 'token', $token->access_token);
             $this->addNotice('La connection '. $field['label'] .' est correctement établie', 'success');
             $this->redirectBack($field);
         }
-        catch (FacebookResponseException $e) {
-            error_log('Facebook fetch error on token request (Graph error: '. $e->getMessage() .')');
-            $this->addNotice('La connection a Facebook a échoué');
-            $this->redirectBack($field);
-        }
-        catch (FacebookSDKException $e) {
-            error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
-            $this->addNotice('La connection a Facebook a échoué');
-            $this->redirectBack($field);
-        }
         catch (Exception $e) {
-            error_log('Facebook fetch error on token request (SDK error: '. $e->getMessage() .')');
-            $this->addNotice('La connection a Facebook a échoué');
+            error_log('Pinterest fetch error on token request ('. $e->getMessage() .')');
+            $this->addNotice('La connection a Pinterest a échoué');
             $this->redirectBack($field);
         }
     }
