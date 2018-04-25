@@ -112,7 +112,9 @@ class Linkedin extends NetworkApi
                 $share = $item->updateContent->companyStatusUpdate->share;
                 $thumb = empty($share->content->submittedImageUrl) ? '' : $share->content->submittedImageUrl;
                 return array(
-                    'thumb' => preg_replace('/^https?:\/\//', '//', $thumb),
+                    'thumb' => array(
+                        'src' => preg_replace('/^https?:\/\//', '//', $thumb),
+                    ),
                     'caption' => empty($share->comment) ? '' : $share->comment,
                     'network' => 'linkedin',
                     'url' => empty($share->content) ? '' : $share->content->shortenedUrl,

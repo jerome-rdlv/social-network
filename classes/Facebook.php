@@ -134,7 +134,9 @@ class Facebook extends NetworkApi
 
         // thumb
         if (!empty($item['full_picture'])) {
-            $data['thumb'] = $item['full_picture'];
+            $data['thumb'] = array(
+                'src' => $item['full_picture'],
+            );
         }
 //        elseif (!empty($item['picture'])) {
 //            $data['thumb'] = $item['picture'];
