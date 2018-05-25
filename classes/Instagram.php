@@ -140,7 +140,7 @@ class Instagram extends NetworkApi
                 ),
                 'caption' => $caption,
                 'network' => 'instagram',
-                'url' => sprintf('https://instagram.com/p/%s', $item['shortcode']),
+                'url' => sprintf('https://www.instagram.com/p/%s', $item['shortcode']),
                 'date' => DateTime::createFromFormat('U', (int)$item['taken_at_timestamp'])
             );
         }, $nodes);
