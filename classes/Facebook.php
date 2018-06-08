@@ -48,7 +48,7 @@ class Facebook extends NetworkApi
 
             /** @see https://developers.facebook.com/docs/graph-api/reference/v2.8/page/feed */
             $response = $fb->get(sprintf(
-                '%s/posts?fields=%s&limit=%s',
+                '%s/feed?fields=%s&limit=%s',
                 $field['value']['target'],
                 implode(',', array(
                     'id', 'message', 'picture', 'full_picture', 'name',
@@ -82,7 +82,9 @@ class Facebook extends NetworkApi
 
             $callbackUrl = $this->getCallbackUrl($field);
 
-            $url = $fb->getRedirectLoginHelper()->getLoginUrl($callbackUrl);
+            $url = $fb->getRedirectLoginHelper()->getLoginUrl($callbackUrl, [
+                'user_posts'
+            ]);
 
             $response = $this->getData($field);
 
