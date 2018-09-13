@@ -68,13 +68,13 @@ class Youtube extends NetworkApi
             $thumbnails = $item->getSnippet()->getThumbnails();
             
             /** @var Google_Service_YouTube_Thumbnail[] $thumbs */
-            $thumbs = [
+            $thumbs = array_filter([
                 $thumbnails->getDefault(),
                 $thumbnails->getMedium(),
                 $thumbnails->getStandard(),
                 $thumbnails->getHigh(),
                 $thumbnails->getMaxres(),
-            ];
+            ]);
             
             /** @var Google_Service_YouTube_ThumbnailDetails $thumbs */
             $thumb = $item->getSnippet()->getThumbnails()->getStandard();
@@ -86,7 +86,7 @@ class Youtube extends NetworkApi
                     'height' => $thumb->getHeight(),
                     'srcset' => implode(', ', array_map(function ($thumb) {
                         /** @var Google_Service_YouTube_Thumbnail $thumb */
-                        return $thumb->getUrl() .' '. $thumb->getWidth() .'w';
+                        return $thumb->getUrl() . ' ' . $thumb->getWidth() . 'w';
                     }, $thumbs))
                 ),
                 'caption' => $item->getSnippet()->getDescription(),
