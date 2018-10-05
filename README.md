@@ -105,7 +105,7 @@ Facebook App should stay in development status.
 ### Instagram
 
 Only target is needed, it is the identifier that appears at the end of the Instagram URL:  
-https://www.instagram.com/**xxxxxxx**
+https://www.instagram.com/xxxxxxx
 
 ### Pinterest
 
