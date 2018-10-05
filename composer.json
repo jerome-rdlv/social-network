@@ -1,9 +1,9 @@
 {
     "name": "social-network",
-    "description": "Social network api connections.",
-    "homepage": "https://rue-de-la-vieille.fr/",
+    "description": "Social Network Connection Field for ACF / WordPress",
+    "homepage": "https://github.com/jerome-rdlv/social-network",
     "type": "wordpress-muplugin",
-    "license": "private",
+    "license": "MIT",
     "authors": [
         {
             "name"    : "Jérôme Mulsant",

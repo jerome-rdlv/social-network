@@ -16,6 +16,17 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 // exit if accessed directly
 if (!defined('ABSPATH')) exit;
 
+if (!class_exists('NetworkApi')) {
+    $autoload = __DIR__ .'/vendor/autoload.php';
+
+    if (file_exists($autoload)) {
+        require_once $autoload;
+    }
+    else {
+        error_log('Class NetworkApi not defined for social-network plugin. You need to install dependencies with `composer install`.');
+    }
+}
+
 // check if class already exists
 if (!class_exists('SocialNetwork')) :
 
